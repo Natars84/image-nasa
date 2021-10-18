@@ -1,6 +1,7 @@
 import requests
-from requests.adapters import HTTPadapter
-from requests.package.urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
+
 import json
 import sys
 import os
@@ -66,16 +67,17 @@ def envoyerRequeteGET(url):
 	try:
 		session = requests.Session()
 		retry = Retry(connect=3, backoff_factor=0.5)
-		adapter = HTTPadapter(max_retries = retry)
+		adapter = HTTPAdapter(max_retries = retry)
 		session.mount('http://', adapter)
 		session.mount('https://', adapter)
 
-		reponse = session.get()
+		reponse = session.get(url)
 
 	except:
 		print("La dernière requête envoyée a rencontré une erreur")
 		print("Requête: " + url)
 		exit()
+
 
 	statutHTTP = statutRequeteCorrect(reponse)
 	if statutHTTP:
@@ -105,31 +107,29 @@ nombreOccurence = int(donnees["collection"]["metadata"]["total_hits"])
 
 # On affiche le nmbre de résultats trouvés et on demande à l'utilisateur s'il faut lancer le téléchargement
 # La boucle est là pour s'assurer que l'on obtiens une réponse correcte
-while True:
-	valeurRecueCorrecte = True
 
-	print(str(nombreOccurence) + "éléments trouvés. Voulez-vous lancer le téléchargement ?")
-	print("1: OUR ; 2: NON")
+valeurRecueCorrecte = False
+while not valeurRecueCorrecte:
+
+	print(str(nombreOccurence) + " éléments trouvés. Voulez-vous lancer le téléchargement ?")
+	print("1: OUI ; 2: NON")
 	choix = input("Réponse: ")
 
 	# Une fois que l'utilisateur a fait son choix, on détermine s'il est correcte
 	# CàD qu'il s'agisse d'un nombre compris entre 1 et 2
-	try:
-		choix = int(choix)
-	except:
-		valeurRecueCorrecte = False
 
-		if choix == 1:
-			print("\nOK, lancement du téléchargement")
-			break
-		elif choix == 2:
-			print("\nOK, abandon du téléchargement et fin du programme")
-			exit()
-		else:
-    			valeurRecueCorecte = False
+	if choix == '1':
+		print("\nOK, lancement du téléchargement")
+		valeurRecueCorrecte = True
+	elif choix == '2':
+		print("\nOK, abandon du téléchargement et fin du programme")
+		valeurRecueCorrecte = True
+		exit()
+	else:
+		valeurRecueCorecte = False
 
 		# Si la valeur saisie par l'utilisateur est incorrecte
 		if not valeurRecueCorrecte:
 			print("\nLa valeur saisie est incorrecte, veuillez réessayer")
-			
+
 print("Downloooooooooooooooooooooooooooooooooooooooooooooooooooad !!!")
