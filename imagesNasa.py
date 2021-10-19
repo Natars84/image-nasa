@@ -96,6 +96,27 @@ def statutRequeteCorrect(reponseRequete):
 	else:
 		return False
 
+# Créé une liste qui associe, pour chaque images, son nasa_id à son lien de téléchargement
+def listerInfosImages(json):
+	listeImages = []
+	items = json["collection"]["items"]
+
+	for image in items:
+		nasa_id = image["data"][0]["nasa_id"]
+		collection = image["href"]
+		lien = extraireLienTelechargementImage(collection)
+
+		listeImages.append([nasa_id, lien])
+
+	return listeImages
+
+# Permet d'obtenir le lien de téléchargement direct d'une image à partir de l'URL de sa collection
+def extraireLienTelechargementImage(collectionLink):
+	listeLienImages = envoyerRequeteGET(collectionLink).json()
+
+	return listeLienImages[0]
+
+
 # On récupère les données trouvées par le serveur suivant les critères de recherche fournis
 reponse = envoyerRequeteGET(urlRequete)
 
@@ -116,7 +137,7 @@ while not valeurRecueCorrecte:
 	choix = input("Réponse: ")
 
 	# Une fois que l'utilisateur a fait son choix, on détermine s'il est correcte
-	# CàD qu'il s'agisse d'un nombre compris entre 1 et 2
+	# CàD soit '1', soit '2'
 
 	if choix == '1':
 		print("\nOK, lancement du téléchargement")
@@ -132,4 +153,9 @@ while not valeurRecueCorrecte:
 		if not valeurRecueCorrecte:
 			print("\nLa valeur saisie est incorrecte, veuillez réessayer")
 
-print("Downloooooooooooooooooooooooooooooooooooooooooooooooooooad !!!")
+#print("Downloooooooooooooooooooooooooooooooooooooooooooooooooooad !!!")
+
+listeImages = listerInfosImages(donnees)
+
+for image in listeImages:
+	print(image[0] + " => " + image[1])
