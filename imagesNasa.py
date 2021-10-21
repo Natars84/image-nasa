@@ -2,11 +2,12 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
+import time
 import json
 import sys
 import os
 
-urlRequete = "https://images-api.nasa.gov/search?"
+urlRequete = "https://images-api.nasa.gov/search?media_type=image&"
 
 #Le dossier créé sera là où se trouve le script
 dossierImage = os.getcwd() + "/imageNASA/"
@@ -22,7 +23,7 @@ except OSError: #Si erreur: il existe déjà
 ##########################
 critereRecherche = dict()
 argumentRecu = dict()
-listeCritereRecherche = ['q', 'center', 'description', 'keywords', 'location', 'media_type', 'nasa_id', 'photographer', 'secondary_creator', 'title', 'year_start', 'year_end']
+listeCritereRecherche = ['q', 'center', 'description', 'keywords', 'location', 'nasa_id', 'photographer', 'secondary_creator', 'title', 'year_start', 'year_end']
 
 #On récupère les arguments
 listeArgument = sys.argv
@@ -86,7 +87,7 @@ def envoyerRequeteGET(url):
 	else:
 		print("La dernière requête envoyée a rencontré une erreur")
 		print("Requête: " + url)
-		print("Statut HTTP: " + statutHTTP)
+		print("Statut HTTP: " + str(statutHTTP))
 		exit()
 
 # Vérifie que le code de retour HTTP soit correct
@@ -107,6 +108,7 @@ def listerInfosImages(json):
 		lien = extraireLienTelechargementImage(collection)
 
 		listeImages.append([nasa_id, lien])
+		time.sleep(0.6)
 
 	return listeImages
 
@@ -155,7 +157,37 @@ while not valeurRecueCorrecte:
 
 #print("Downloooooooooooooooooooooooooooooooooooooooooooooooooooad !!!")
 
-listeImages = listerInfosImages(donnees)
 
-for image in listeImages:
+print("Collecte des informations nécessaire au téléchargement des images:")
+# On parcours toutes les pages de résultats afin de récupérer les
+# infos et le lien de téléchargement direct de chacune des images
+telechargerLienPageSuivante = True
+listeImagesGeneral = []
+pageEnCours = 0
+while telechargerLienPageSuivante:
+
+	pageEnCours += 1
+	print("Traitement de la page " + str(pageEnCours), end='\r')
+
+	#On récupère les infos des images de la page en cours,
+	listeImagesPage = listerInfosImages(donnees)
+
+	#Puis on les rajoutes au listing général
+	listeImagesGeneral += listeImagesPage
+
+	#On regarde ensuite s'il y a une autre page à traiter
+	tailleTableauLienPage = len(donnees["collection"]["links"])
+	actionLienPage = donnees["collection"]["links"][tailleTableauLienPage - 1]["rel"]
+
+	#Si c'est le cas, on récupères les données de la page suivante, et on reboucle
+	if actionLienPage == "next":
+		donnees = envoyerRequeteGET(donnees["collection"]["links"][tailleTableauLienPage -1]["href"])
+		donnees = donnees.json()
+
+	#Sinon, on sort de la boucle
+	elif actionLienPage == "prev":
+		telechargerLienPageSuivante = False
+
+#Une fois que l'on a tout les résultats, on les traites
+for image in listeImagesGeneral:
 	print(image[0] + " => " + image[1])
