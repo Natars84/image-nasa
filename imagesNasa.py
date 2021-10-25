@@ -2,6 +2,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
+from math import ceil
 import time
 import json
 import sys
@@ -63,6 +64,16 @@ urlRequete = urlRequete[0:-1]
 #   des données reçues    #
 ###########################
 
+# Permet de télécharer le fichier derrière l'URL spécifié à l'emplacement et avec le nom spécifié (chemin relatif)
+def telechargerFichier(url, cheminRelatif):
+	#Téléchargement du contenu du fichier
+	contenuFichier = envoyerRequeteGET(url)
+
+	#Écriture du contenu téléchargé dans le fichier
+	fichier = open(cheminRelatif, 'wb')
+	fichier.write(contenuFichier.content)
+	fichier.close()
+
 # Permet d'exécuter une requête
 def envoyerRequeteGET(url):
 	try:
@@ -118,6 +129,12 @@ def extraireLienTelechargementImage(collectionLink):
 
 	return listeLienImages[0]
 
+# Renvoie l'extension du fichier désigné via son URL
+def extraireExtensionFichierURL(url):
+	chaineDecoupe = url.split('.')
+	extensionFichier = chaineDecoupe[len(chaineDecoupe) - 1]
+
+	return str(extensionFichier)
 
 # On récupère les données trouvées par le serveur suivant les critères de recherche fournis
 reponse = envoyerRequeteGET(urlRequete)
@@ -155,10 +172,7 @@ while not valeurRecueCorrecte:
 		if not valeurRecueCorrecte:
 			print("\nLa valeur saisie est incorrecte, veuillez réessayer")
 
-#print("Downloooooooooooooooooooooooooooooooooooooooooooooooooooad !!!")
 
-
-print("Collecte des informations nécessaire au téléchargement des images:")
 # On parcours toutes les pages de résultats afin de récupérer les
 # infos et le lien de téléchargement direct de chacune des images
 telechargerLienPageSuivante = True
@@ -167,7 +181,7 @@ pageEnCours = 0
 while telechargerLienPageSuivante:
 
 	pageEnCours += 1
-	print("Traitement de la page " + str(pageEnCours), end='\r')
+	print("Récupération des URLs (page " + str(pageEnCours) + ")", end='\r')
 
 	#On récupère les infos des images de la page en cours,
 	listeImagesPage = listerInfosImages(donnees)
@@ -188,6 +202,16 @@ while telechargerLienPageSuivante:
 	elif actionLienPage == "prev":
 		telechargerLienPageSuivante = False
 
+print()
+
 #Une fois que l'on a tout les résultats, on les traites
+nombreImageTelecharge = 0
 for image in listeImagesGeneral:
-	print(image[0] + " => " + image[1])
+	nombreImageTelecharge += 1
+	print("Téléchargement des images: " + str(nombreImageTelecharge) + "/" + str(nombreOccurence), end='\r')
+
+	extensionFichier = extraireExtensionFichierURL(image[1])
+	telechargerFichier(image[1], dossierImage + image[0] + '.' + extensionFichier)
+	time.sleep(0.3)
+
+print()
