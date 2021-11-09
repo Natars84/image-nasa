@@ -2,13 +2,16 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
-from math import ceil
 import time
 import json
 import sys
 import os
 
+#URL de base, sur laquelle on va venir greffer les critères de recherches
 urlRequete = "https://images-api.nasa.gov/search?media_type=image&"
+
+#Limite horaire maximale du nombre de requêtes envoyées par le script
+limiteRequeteParHeure = 1000
 
 #Le dossier créé sera là où se trouve le script
 dossierImage = os.getcwd() + "/imageNASA/"
@@ -84,6 +87,7 @@ def envoyerRequeteGET(url):
 		session.mount('https://', adapter)
 
 		reponse = session.get(url)
+		time.sleep(round(3600/limiteRequeteParHeure, 3))
 
 	except:
 		print("La dernière requête envoyée a rencontré une erreur")
@@ -119,7 +123,6 @@ def listerInfosImages(json):
 		lien = extraireLienTelechargementImage(collection)
 
 		listeImages.append([nasa_id, lien])
-		time.sleep(0.6)
 
 	return listeImages
 
@@ -212,6 +215,5 @@ for image in listeImagesGeneral:
 
 	extensionFichier = extraireExtensionFichierURL(image[1])
 	telechargerFichier(image[1], dossierImage + image[0] + '.' + extensionFichier)
-	time.sleep(0.3)
 
 print()
